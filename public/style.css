@@ -1,0 +1,854 @@
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #2d3748; }
+::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #718096; }
+
+/* Combined and updated body style */
+body {
+    font-family: 'Inter', sans-serif;
+    color: #e2e8f0; /* Default text color */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #1a202c; /* Fallback color */
+    background-image: url('main.png');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed; /* Keeps background fixed */
+}
+.game-container { display: flex; flex-direction: column; flex-grow: 1; max-width: 1000px; margin: auto; width: 100%; }
+
+/* Game Output Styling */
+.game-output p { margin-bottom: 0.75rem; line-height: 1.6; }
+.game-output .narration { color: #a0aec0; font-style: italic; }
+.game-output .dialogue { color: #63b3ed; }
+.game-output .important { color: #f6e05e; font-weight: bold; }
+.game-output .error { color: #fc8181; }
+.game-output .success { color: #68d391; }
+.game-output .system { color: #9f7aea; }
+.game-output .spiritual-root { color: #f472b6; font-weight: bold; }
+.game-output .class-info { color: #a78bfa; }
+.game-output .qi-recovery { color: #60a5fa; }
+.game-output .demonic { color: #7f1d1d; }
+.game-output .loot { color: #facc15; }
+.game-output .item-use { color: #34d399; }
+.game-output .market { color: #fbbf24; }
+.game-output .crafting { color: #a3e635; }
+
+/* Combat & Action Text Styling */
+.combat-text-player-turn { color: #f6e05e; font-weight: bold; }
+.combat-text-opponent-turn { color: #fca5a5; font-weight: bold; }
+.combat-text-player-action { color: #68d391; }
+.combat-text-opponent-action { color: #fc8181; }
+.combat-text-narration { color: #a0aec0; font-style: italic;}
+
+/* Updated Action Button Styling */
+.action-button {
+    background-image: url('assets/UI/button.png');
+    background-size: 100% 100%; /* Stretch to fit */
+    background-color: transparent; /* Ensure no solid color interferes */
+    border: none; /* Remove default or Tailwind borders */
+    color: #F5E8C8; /* Brighter parchment text */
+    font-family: 'Noto Serif SC', serif; /* Thematic serif font */
+    font-size: 1.1em; /* Adjusted font size */
+    font-weight: 600; /* Slightly less bold for better readability with shadow */
+    text-align: center;
+    cursor: pointer;
+    text-shadow: 0 0 6px #FFEFB3, 1px 1px 2px #4A3B31; /* Brighter, softer glow with a darker, sharper underlying shadow */
+    transition: all 0.2s ease-in-out;
+
+    height: 52px; /* Slightly increased height for better padding feel */
+    min-width: 150px; /* Ensure buttons have a decent minimum width */
+    padding-left: 25px;  /* Horizontal padding for text inside the button image */
+    padding-right: 25px; /* Adjust these based on the button.png's internal clear space */
+
+    white-space: nowrap; /* Prevent text wrapping */
+    display: inline-flex; /* For better content centering */
+    align-items: center;    /* Vertically center text/content */
+    justify-content: center; /* Horizontally center text/content */
+    box-sizing: border-box;  /* Consistent box model */
+}
+.action-button:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 230, 180, 0.6); /* Warmer, slightly larger glow */
+}
+.action-button:active:not(:disabled) {
+    filter: brightness(0.85); /* Slightly darker when pressed */
+    transform: scale(0.98); /* Pressed down effect */
+}
+.action-button:disabled {
+    filter: grayscale(70%) brightness(0.6); /* Muted, darker, and desaturated */
+    cursor: not-allowed;
+    /* opacity: 0.7; */ /* Filter is usually enough */
+}
+.stat-value { min-width: 60px; display: inline-block; text-align: right; }
+
+/* Combat Interface Styling */
+#combat-interface {
+    display: none;
+    /* border: 1px solid #4a5568; Replaced by rpg-ui-panel application */
+    /* border-radius: 0.5rem; Replaced by rpg-ui-panel application */
+    padding: 1rem;
+    margin-bottom:1rem;
+    /* background-color: #2d3748; Replaced by rpg-ui-panel application */
+}
+.combatant-info { margin-bottom: 0.75rem; text-align: center; }
+.combatant-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 0.25rem; margin-top: 0.5rem; }
+.health-bar-container { width: 100%; background-color: #374151; /* Darker track */ border-radius: 0.25rem; height: 24px; position: relative; border: 1px solid #525c6f; overflow: hidden; margin-top: 0.25rem; box-shadow: inset 0 1px 2px rgba(0,0,0,0.2); }
+.health-bar-fill { height: 100%; border-radius: 0.25rem; transition: width 0.3s ease-out; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+.health-bar-player .health-bar-fill { background-image: linear-gradient(to bottom, #58cc88, #38a868); /* Green gradient */ }
+.health-bar-opponent .health-bar-fill { background-image: linear-gradient(to bottom, #f87171, #dc2626); /* Red gradient */ }
+.health-bar-text { position: absolute; width: 100%; text-align: center; line-height: 24px; font-weight: bold; color: #e2e8f0; text-shadow: 1px 1px #1a202c; }
+#combat-action-text { min-height: 50px; text-align: center; }
+#combat-action-text p { margin-bottom: 0.25rem; line-height: 1.5; }
+#combat-specific-actions { }
+
+/* Pixel Art Sprite Styling */
+.pixel-art-sprite {
+    width: 64px; height: 64px; border: 2px solid #a0aec0; margin: 0 auto 0.5rem auto;
+    image-rendering: pixelated; display: grid; grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr); box-shadow: 2px 2px 0px #1a202c;
+}
+.player-sprite { background-color: #4299e1; }
+.player-sprite div { background-color: #63b3ed; }
+.monster-sprite { background-color: #c53030; }
+.monster-sprite div { background-color: #e53e3e; }
+
+/* Class Selection Styling */
+#class-selection-info { margin-top: 0.5rem; padding: 0.5rem; background-color: #2d3748; border-radius: 0.25rem; min-height: 80px;}
+#class-selection-info h3 { font-size: 1.1em; color: #f6e05e; margin-bottom: 0.25rem;}
+#class-selection-info p { font-size: 0.9em; color: #cbd5e0; margin-bottom: 0.25rem;}
+
+/* Generic Menu/Panel Styling */
+#market-menu, #market-listings-view, #concoction-menu, #sect-creation-panel {
+    /* These will now primarily use .rpg-ui-panel for their base styling */
+    /* margin-top: 1rem; padding: 1rem; background-color: #2d3748; border-radius: 0.5rem; border: 1px solid #4a5568; */
+    margin-top: 1rem; /* Keep margin */
+}
+/* Attribute allocation menu has its own specific panel styling further down */
+
+#market-menu h3, #market-listings-view h3, #concoction-menu h3, #sect-creation-panel h3 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.4em; /* Slightly larger */
+    color: #fde047; /* Brighter yellow, consistent with other titles */
+    margin-bottom: 1rem; text-align: center;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+.market-item-button, .concoction-recipe-button { display: block; width: 100%; text-align: left; }
+.market-listing-item { border-bottom: 1px solid #4a5568; padding: 0.75rem 0.5rem; margin-bottom: 0.5rem; }
+/* Player Search Specific Styling */
+#player-search-view { margin-top: 1rem; padding: 1rem; background-color: #2d3748; border-radius: 0.5rem; border: 1px solid #4a5568;}
+#player-search-view h3 { font-size: 1.25em; color: #f6e05e; margin-bottom: 0.75rem; text-align: center;}
+.player-search-result-item { border-bottom: 1px solid #4a5568; padding: 0.75rem 0.5rem; margin-bottom: 0.5rem; }
+.player-search-result-item:last-child { border-bottom: none; }
+.market-listing-item:last-child { border-bottom: none; }
+.concoction-recipe-item { border: 1px solid #4a5568; padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 0.25rem; background-color: #374151; }
+.concoction-recipe-item h4 { font-size: 1.1em; color: #fde047; margin-bottom: 0.25rem; }
+.concoction-recipe-item p { font-size: 0.9em; color: #d1d5db; margin-bottom: 0.1rem; }
+.concoction-ingredient-list { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.25rem; }
+
+/* Chat Styling */
+#chat-log-container { /* Styles mostly applied via Tailwind classes */ }
+.chat-message {
+    padding: 0.25rem 0.5rem;
+    margin-bottom: 0.25rem;
+    border-radius: 0.25rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+.chat-message .sender-name {
+    font-weight: bold;
+    color: #63b3ed; /* Example color for sender */
+    margin-right: 0.25rem;
+}
+.chat-message .timestamp {
+    font-size: 0.75rem;
+    color: #a0aec0;
+    margin-left: 0.5rem;
+}
+.chat-message .message-text {
+    color: #e2e8f0;
+}
+.my-message { background-color: #374151; /* User's own messages */ }
+.other-message { background-color: #4b5563; /* Other users' messages */ }
+
+
+@media (max-width: 768px) { /* Adjusted to 768px for common tablet breakpoint */
+    .main-content-area { flex-direction: column; }
+    .stats-panel { order: -1; width: 100%; margin-bottom: 1rem; border-right: none; border-bottom: 1px solid #4a5568; padding-bottom: 1rem; }
+    .game-output-container { width: 100%; padding-left: 0; }
+    .action-buttons-container { justify-content: center; flex-wrap: wrap; }
+    #combat-specific-actions { justify-content: center; flex-wrap: wrap; }
+    .action-button { margin: 0.25rem; }
+}
+@media (max-width: 1024px) { /* Ensure side chat panel doesn't overlap too much on tablets */
+    #side-chat-panel {
+        width: 280px; /* Keep width reasonable on smaller screens */
+    }
+}
+/* Modal styles (generic and input modal) */
+.modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); padding-top: 60px; }
+.modal-content {
+    /* background-color: #2d3748; Replaced by rpg-ui-panel */
+    margin: 5% auto;
+    /* padding: 20px; Handled by rpg-ui-panel */
+    /* border: 1px solid #4a5568; Handled by rpg-ui-panel */
+    width: 80%; max-width: 500px; /* border-radius: 8px; Handled by rpg-ui-panel */ text-align: center; }
+.modal-input { background-color: #374151; color: #e2e8f0; border: 1px solid #5A4B3C; padding: 10px; margin-top: 10px; margin-bottom: 15px; width: calc(100% - 22px); border-radius: 4px; }
+
+/* Inventory Grid Styling (reused for modal) */
+/* Container for the grid of slots in the modal */
+#modal-inventory-grid-container {
+    display: grid; /* Using grid for defined columns */
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); /* Responsive columns */
+    gap: 12px; /* Increased spacing for name below */
+    padding: 8px; /* Padding inside the container */
+    max-height: 400px; /* Limit height and enable scroll */
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: #2d3748; /* Dark background for the grid area */
+    border: 1px solid #4a5568; /* Subtle border */
+    border-radius: 0.25rem; /* Rounded corners */
+}
+
+.inventory-slot {
+    width: 60px;
+    height: 60px;
+    /* background-image removed from here, will be on .inventory-slot-frame */
+    height: auto; /* Allow height to adjust for name below frame */
+    display: flex;
+    flex-direction: column; /* Stack frame and name vertically */
+    align-items: center;
+    /* justify-content: center; Removed to allow name to sit naturally below */
+    position: relative;
+    cursor: default;
+    /* border-radius & overflow removed */
+    image-rendering: pixelated;
+}
+
+/* New div for the visual slot frame */
+.inventory-slot-frame {
+    width: 60px;
+    height: 60px;
+    background-image: url('emptyinventoryslot.png'); /* Your new slot image */
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative; /* For positioning quantity inside */
+}
+
+.inventory-slot.has-item {
+    cursor: pointer;
+}
+.inventory-slot.has-item .inventory-slot-frame:hover { /* Apply hover to the frame */
+    outline: 2px solid #f6e05e;
+    z-index: 10;
+}
+
+.inventory-slot-icon {
+    width: 40px; /* Increased icon size */
+    height: 40px;
+    /* margin-bottom removed */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    image-rendering: pixelated;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8em; /* Adjusted for new icon size */
+    color: #a0aec0; /* Lighter fallback text for dark slot interior */
+    text-shadow: 1px 1px #1a202c;
+}
+
+.inventory-slot-name {
+    font-size: 0.65em;
+    color: #cbd5e0;   /* Light text for dark background */
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 90%;
+    line-height: 1;
+    padding: 0 1px;
+    font-weight: 500;
+    margin-top: 4px; /* Space between frame and name */
+}
+
+.inventory-slot-quantity {
+    position: absolute;
+    bottom: 3px; /* Adjusted for new frame */
+    right: 3px;  /* Adjusted for new frame */
+    background-color: rgba(26, 32, 44, 0.85);
+    color: #f6e05e;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 0.6em;
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+/* Inventory Modal Specific Styles */
+#grid-inventory-modal {
+    z-index: 200; /* Ensure it's above other modals like inputModal */
+}
+#grid-inventory-modal-content {
+    background-color: #2d3748; /* Dark background, matches Tailwind bg-gray-800 */
+}
+
+/* New RPG Panel Styling */
+.rpg-ui-panel {
+    background-color: rgba(30, 41, 59, 0.85); /* Slightly transparent bg-gray-800/900 equivalent */
+    border: 2px solid #504030; /* Darker, more "aged metal" or "wood" border */
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 0 0 1px rgba(150, 160, 180, 0.15), /* Subtle outer highlight */
+                inset 0 0 10px rgba(0,0,0,0.45), /* Inner shadow for depth */
+                0 5px 18px rgba(0,0,0,0.35); /* Outer drop shadow */
+    backdrop-filter: blur(3px); /* Optional: if body has a more complex image background */
+}
+
+/* Dedicated Exploration View Styling */
+.dedicated-exploration-background {
+    /* Styles for background image will be applied dynamically via JS */ /* This comment is fine */
+}
+
+/* Cultivator Profile Card Styling */
+#stats-panel-aside.rpg-ui-panel {
+    background-image: url('assets/UI/profile.png'); /* Apply the new background image */
+    background-size: cover; /* This will crop sides of the 800x600 image on a tall panel */
+    background-position: center;
+    background-repeat: no-repeat;
+    padding: 4.75rem 1rem; /* Increased top/bottom padding: 4.75rem (76px), 1rem (16px) left/right */
+}
+#stats-panel-aside.rpg-ui-panel h2 {
+    font-family: 'Noto Serif SC', serif;
+    color: #facc15; /* Brighter yellow for titles */
+    border-bottom: 1px solid #525c6f;
+    padding-bottom: 0.6rem;
+    margin-bottom: 1.25rem; /* Increased margin slightly */
+    font-size: 1.6em; /* Increased font size to match attribute panel title */
+    text-align: center; /* Center the title */
+    margin-top: 0; /* Ensure no extra margin pushes it down from the panel's padding */
+}
+
+/* Profile Section Headers (e.g., "Basic Info", "Attributes") */
+.profile-section-header {
+    font-family: 'Noto Serif SC', serif;
+    color: #fde047; /* Tailwind yellow-300 */
+    font-size: 1.25em;
+    font-weight: 700;
+    margin-top: 1.25rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(150, 160, 180, 0.3); /* Subtle underline */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+.profile-section-header:first-of-type {
+    margin-top: 0.5rem; /* Less top margin for the very first header */
+}
+
+/* Styling for individual stat rows within the Cultivator Profile */
+#player-stats > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0; /* Reduced padding */
+    margin-bottom: 0.25rem; /* Reduced margin */
+    background-color: transparent; /* Remove individual row background */
+    border: none; /* Remove individual row border */
+    min-height: 26px; /* Adjusted min-height */
+}
+#player-stats > div strong { /* Stat label, e.g., "Name:" */
+    color: #d1d5db; /* Tailwind gray-300 */
+    margin-right: 0.75rem; /* Space between label and value */
+}
+/* Value spans (e.g., #stat-name) already have Tailwind colors and .stat-value for alignment */
+
+/* New Profile Visual Container (Grid for image and slots) */
+#profile-main-visual-container {
+    display: grid;
+    grid-template-columns: 80px 1fr 80px; /* Slot, Center Image Area, Slot */
+    grid-template-rows: 80px 80px 80px;    /* Slot, Slot, Slot */
+    gap: 12px; /* Gap between elements */
+    align-items: center;
+    justify-content: center; /* Center the grid horizontally if panel is wider */
+    margin-bottom: 1.5rem; /* Space before the text stats section */
+    min-height: calc(80px * 3 + 12px * 2); /* Ensure enough height for 3 rows of slots + gaps */
+}
+
+#profile-character-image-container { /* The div holding the <img> */
+    grid-column: 2 / 3; /* Center column */
+    grid-row: 1 / 4;    /* Span all three rows */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px; /* Optional padding around the image */
+    min-width: 150px; /* Ensure center column has some width */
+}
+
+#stat-gender-image { /* This is the main character portrait <img> tag */
+    max-width: 160px;
+    max-height: 200px;
+    width: auto;   /* Maintain aspect ratio */
+    height: auto;  /* Maintain aspect ratio */
+    object-fit: contain;
+    border-radius: 8px;
+    /* Border might come from profile.png background, or add one here if needed */
+    /* box-shadow: 0 0 8px rgba(255, 223, 186, 0.5); */ /* Optional subtle glow */
+}
+
+/* Individual slot positioning in the grid */
+#profile-slot-head { grid-column: 1 / 2; grid-row: 1 / 2; align-self: center; justify-self: center; }
+#profile-slot-ring1  { grid-column: 3 / 4; grid-row: 1 / 2; align-self: center; justify-self: center; }
+#profile-slot-weapon { grid-column: 1 / 2; grid-row: 2 / 3; align-self: center; justify-self: center; }
+#profile-slot-body   { grid-column: 3 / 4; grid-row: 2 / 3; align-self: center; justify-self: center; }
+#profile-slot-feet   { grid-column: 1 / 2; grid-row: 3 / 4; align-self: center; justify-self: center; }
+
+.profile-equipment-slot {
+    width: 70px;
+    height: 70px;
+    background-image: url('emptyinventoryslot.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    position: relative;
+    padding: 4px;
+    box-sizing: border-box;
+    cursor: pointer; /* Indicate clickable for unequip */
+}
+.profile-equipment-slot .item-icon-profile {
+    width: 36px; height: 36px; background-size: contain; background-position: center; background-repeat: no-repeat; margin-bottom: 2px;
+}
+.profile-equipment-slot .item-name-profile {
+    font-size: 0.6em; color: #cbd5e0; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;
+}
+.profile-equipment-slot .unequip-button-profile {
+    position: absolute; top: 0px; right: 0px; padding: 0px 3px; font-size: 0.6em; line-height: 1.1;
+    background-color: rgba(172, 46, 46, 0.7); color: #fde047; border: 1px solid rgba(253, 224, 71, 0.5); border-radius: 3px; cursor: pointer; z-index: 1;
+}
+.profile-equipment-slot .unequip-button-profile:hover { background-color: rgba(220, 38, 38, 0.8); color: white;
+}
+
+.game-output-container.rpg-ui-panel #game-output {
+    background-color: rgba(26, 32, 44, 0.75); /* Darker, slightly transparent log area */
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 1rem; /* Space before action buttons */
+}
+
+/* Main Menu Action Buttons Container */
+#action-buttons-container {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: center; /* Center buttons horizontally */
+    gap: 0.75rem; /* Space between vertical buttons */
+    margin-top: 1rem; /* Space between game-output and this button container */
+}
+
+/* Exploration Area Cards Styling */
+#action-buttons-container.exploration-mode {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Wider cards */
+    gap: 1.5rem; /* Increased gap */
+    padding-top: 1rem; /* Add some padding at the top */
+}
+
+.exploration-card {
+    position: relative;
+    min-height: 380px; /* Adjusted height */
+    border-radius: 12px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    color: #fff;
+}
+
+.exploration-card:hover:not(.locked-true) { /* Only apply hover effect to unlocked cards */
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+.exploration-card-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 35%, rgba(0,0,0,0.15) 100%);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.exploration-card-header {
+    margin-bottom: auto; /* Pushes header to top */
+}
+
+.exploration-card-name {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.6em;
+    font-weight: 700;
+    color: #fde047; /* Brighter yellow for title */
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    margin: 0 0 0.25rem 0;
+}
+
+.exploration-card-status {
+    font-size: 0.8em;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    display: inline-block; /* To sit nicely below the name */
+}
+.exploration-card-status.unlocked { background-color: rgba(104, 211, 145, 0.85); color: #1a202c; }
+.exploration-card-status.locked { background-color: rgba(252, 129, 129, 0.85); color: #1a202c; }
+
+.exploration-card-details { margin-bottom: 0.75rem; }
+.exploration-card-req { font-size: 0.95em; color: #e2e8f0; margin-bottom: 0.35rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.exploration-card-desc { font-size: 0.8em; color: #cbd5e0; font-style: italic; line-height: 1.3; max-height: 3.9em; overflow: hidden; text-overflow: ellipsis; }
+
+.exploration-card-button.action-button {
+    width: 100%; padding: 0.75rem 1rem; font-size: 1.1em; font-family: 'Noto Serif SC', serif;
+    font-weight: 600; border-radius: 6px; min-height: auto; margin-top: 0.75rem;
+}
+.exploration-card.locked-true { filter: grayscale(85%) brightness(0.6); }
+.exploration-card.locked-true .exploration-card-button { background-color: #4a5568 !important; border-color: #718096 !important; color: #a0aec0 !important; cursor: not-allowed; }
+.exploration-card-lock-icon { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 4.5em; color: rgba(255,255,255,0.25); pointer-events: none; display: none; }
+.exploration-card.locked-true .exploration-card-lock-icon { display: block; }
+.exploration-card-lock-icon svg { width: 1em; height: 1em; fill: currentColor; }
+
+/* Card-like styling for action buttons in the main menu */
+#action-buttons-container .action-button {
+    background-color: rgba(45, 35, 25, 0.9); /* Dark, desaturated brown/grey - like aged wood/stone */
+    border: 2px solid #605040; /* Slightly lighter, but still thematic border */
+    color: #D8C8A8; /* Aged parchment text */
+    font-family: 'Noto Serif SC', serif; /* Thematic font */
+    font-size: 1.05em; /* Adjusted font size */
+    font-weight: 600;
+    padding: 1rem 0.75rem; /* Vertical and horizontal padding */
+    min-height: 90px; /* Minimum height for the cards */
+    border-radius: 8px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.7); /* Stronger shadow for "inked" feel */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4), /* Slightly deeper shadow */
+                inset 0 1px 2px rgba(255,255,255,0.05), /* Subtle inner highlight */
+                inset 0 -1px 1px rgba(0,0,0,0.2); /* Subtle inner bottom shadow for depth */
+    transition: all 0.2s ease-out;
+    width: auto; /* Allow button to size to its content + padding */
+    min-width: 220px; /* Ensure a decent minimum width for vertical buttons */
+    max-width: 350px; /* Prevent buttons from becoming too wide */
+}
+#action-buttons-container .action-button:hover:not(:disabled) {
+    background-color: rgba(60, 50, 40, 0.95); /* Slightly lighter, warmer brown on hover */
+    border-color: #8A7056; /* More prominent, lighter bronze/wood border on hover */
+    transform: translateY(-3px) scale(1.03); /* Lift and slightly enlarge */
+    box-shadow: 0 7px 15px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,255,255,0.08), inset 0 -1px 1px rgba(0,0,0,0.1);
+    color: #FFF5E1; /* Brighter, creamy parchment text on hover */
+}
+
+#action-buttons-container .action-button img {
+    max-height: 40px;
+    max-width: 40px;
+    margin-right: 0.75rem; /* Add some space between icon and text */
+    object-fit: contain; /* Scale image nicely */
+    flex-shrink: 0; /* Prevent icon from shrinking if button text is long */
+}
+
+/* Attribute Allocation Panel Styling */
+#attribute-allocation-menu.rpg-ui-panel {
+    padding: 1.5rem;
+}
+#attribute-allocation-menu h3 {
+    font-family: 'Noto Serif SC', serif;
+    color: #facc15; /* Brighter yellow for titles */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    text-align: center;
+    font-size: 1.6em;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #605040; /* Thematic border */
+    padding-bottom: 0.8rem;
+}
+#attribute-allocation-menu #available-points-display {
+    font-size: 1.1em;
+    color: #fde047; /* Tailwind yellow-400 */
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+.attribute-allocation-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0.5rem;
+    background-color: rgba(45, 35, 25, 0.7); /* Darker, thematic background */
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    border: 1px solid #5A4B3C; /* Thematic border */
+}
+.attribute-allocation-row .attr-name {
+    font-weight: 500;
+    color: #e5e7eb; /* Tailwind gray-200 */
+}
+.attribute-allocation-row .attr-controls button {
+    background-color: #5A4B3C; /* Dark bronze/wood */
+    color: #F5E8C8; /* Parchment text */
+    border: 1px solid #7A6B5C; /* Lighter bronze/wood */
+    width: 30px; height: 30px; line-height: 28px; text-align: center;
+    border-radius: 50%; font-size: 1.2em; margin: 0 0.3rem;
+}
+.attribute-allocation-row .attr-controls button:hover:not(:disabled) { background-color: #7A6B5C; color: #fff; }
+.attribute-allocation-row .attr-controls button:disabled { filter: grayscale(50%) brightness(0.7); cursor: not-allowed; }
+.attribute-allocation-row .attr-value { font-weight: bold; color: #facc15; min-width: 25px; text-align: center; }
+#attribute-allocation-actions { margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem; }
+
+/* Sect Creation Panel Styling */
+#sect-creation-panel .form-input, #sect-creation-panel .form-select {
+    background-color: #4a5568; color: #e2e8f0; border: 1px solid #718096;
+    padding: 0.6rem 0.8rem; margin-bottom: 0.75rem; width: 100%; border-radius: 6px; box-sizing: border-box;
+}
+/* Sect Dashboard Styling */
+#sect-dashboard-panel { /* Uses .rpg-ui-panel, flex added inline */ }
+#sect-dashboard-sidebar { /* Tailwind classes used: w-1/4 border-r border-gray-600 p-3 */ }
+#sect-dashboard-header h3 { /* Tailwind classes used */ }
+#sect-dashboard-header p { /* Tailwind classes used */ }
+
+.sect-tab-button {
+    display: block; width: 100%; padding: 0.75rem 1rem; text-align: left;
+    font-family: 'Noto Serif SC', serif; font-size: 1em; color: #cbd5e0; /* gray-300 */
+    background-color: rgba(45, 35, 25, 0.6); border: 1px solid #5A4B3C; /* Thematic */
+    border-radius: 6px; transition: all 0.2s ease-in-out;
+}
+.sect-tab-button:hover:not(.active) { background-color: rgba(60, 50, 40, 0.8); color: #FFF5E1; }
+.sect-tab-button.active {
+    background-color: #facc15; /* yellow-400 */ color: #1a202c; /* gray-900 */
+    font-weight: bold; border-color: #facc15;
+} /* Active tab style is good */
+
+#sect-dashboard-main-content h4 { /* For tab content titles */
+    font-family: 'Noto Serif SC', serif; color: #fde047; /* yellow-300 */
+    font-size: 1.3em; margin-bottom: 1rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid #4a5568; /* border-gray-600 */
+}
+#sect-creation-panel label { display: block; margin-bottom: 0.25rem; color: #cbd5e0; font-size: 0.9em;}
+#sect-creation-panel-actions { margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem; }
+
+/* Hamburger Menu & Side Navigation */
+#hamburger-icon {
+    position: fixed;
+    top: 1rem; left: 1rem;
+    z-index: 1050; /* Above most things, below modals */
+    background-color: rgba(30, 41, 59, 0.8);
+    border: 1px solid #4a5568;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+}
+#hamburger-icon span { display: block; width: 20px; height: 2px; background-color: #e2e8f0; margin: 4px 0; transition: all 0.3s ease; }
+#hamburger-icon.active span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+#hamburger-icon.active span:nth-child(2) { opacity: 0; }
+#hamburger-icon.active span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+#side-menu {
+    position: fixed;
+    top: 0; left: 0;
+    width: 280px; height: 100%;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1040; /* Below hamburger icon, above general content */
+    padding-top: 4rem; /* Space for header/icon */
+}
+#side-menu.active { transform: translateX(0); }
+#side-menu ul { list-style: none; padding: 0; margin: 0; }
+#side-menu ul li a {
+    display: block;
+    padding: 1rem 1.5rem;
+    color: #e2e8f0;
+    text-decoration: none;
+    font-size: 1.1em;
+    border-bottom: 1px solid #374151; /* Separator */
+    transition: background-color 0.2s ease;
+}
+#side-menu ul li a:hover { background-color: #374151; }
+#side-menu ul li:last-child a { border-bottom: none; }
+
+/* View Mode Styling */
+body.view-mode-gameplay #stats-panel-aside { display: none !important; }
+body.view-mode-gameplay .game-output-container { display: flex !important; width: 100% !important; } /* Ensure it's flex for its children */
+
+/* Auth Form Styling */
+.auth-form-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 450px;
+    padding: 2rem;
+    text-align: center;
+    z-index: 1000;
+}
+.auth-form-panel h3 {
+    font-family: 'Noto Serif SC', serif;
+    color: #facc15;
+    font-size: 1.7em; /* Slightly adjusted */
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #525c6f;
+    padding-bottom: 0.8rem;
+}
+.auth-form-panel div:not(.auth-form-actions):not(.auth-error-message) {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+.auth-label {
+    display: block;
+    color: #cbd5e0;
+    margin-bottom: 0.3rem;
+    font-size: 0.9em;
+}
+.auth-input {
+    background-color: #374151; /* Darker input background */
+    color: #e2e8f0;
+    border: 1px solid #5A4B3C; /* Thematic border */
+    padding: 0.6rem 0.8rem;
+    width: 100%;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1em;
+}
+.auth-input:focus {
+    outline: none;
+    border-color: #facc15;
+    box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.4); /* Slightly stronger focus shadow */
+}
+.auth-form-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.auth-form-actions .action-button {
+    width: 100%;
+}
+.auth-error-message {
+    color: #fc8181;
+    background-color: rgba(252, 129, 129, 0.1);
+    border: 1px solid rgba(252, 129, 129, 0.3);
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    font-size: 0.9em;
+    text-align: left;
+    display: none;
+}
+
+body.view-mode-gameplay .main-content-area { column-gap: 0 !important; }
+
+body.view-mode-profile #stats-panel-aside { display: block !important; width: 100% !important; } /* Make stats panel full width */
+body.view-mode-profile .game-output-container { display: none !important; } /* Hide game output container */
+body.view-mode-profile .main-content-area { column-gap: 0 !important; } /* No gap needed if only one item is shown */
+
+/* Unequip Button Styling */
+.unequip-button {
+    margin-left: 8px;
+    padding: 2px 6px;
+    font-size: 0.8em;
+    color: #fca5a5; /* Tailwind red-300 */
+    background-color: #4b5563; /* Tailwind gray-600 */
+    border: 1px solid #718096; /* Tailwind gray-500 */
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+.unequip-button:hover {
+    background-color: #718096; /* Tailwind gray-500 */
+    color: #ffffff;
+}
+.chat-and-input-area { display: none !important; } /* Old chat area, now permanently hidden */
+
+/* New Chat Toggle Button (Bottom) */
+#chat-toggle-button {
+    position: fixed;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1030; /* Above general content, below side menu/modals */
+    background-image: url('assets/UI/chat.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: transparent;
+    border: none;
+    width: 64px; /* Adjust based on image aspect ratio */
+    height: 64px; /* Adjust based on image aspect ratio */
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+}
+#chat-toggle-button:hover {
+    transform: translateX(-50%) scale(1.1);
+}
+
+/* New Side Chat Panel */
+#side-chat-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 320px; /* Adjust as needed */
+    height: 100%;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1035; /* Below side-menu, above chat-toggle-button if it were to overlap */
+    display: flex;
+    flex-direction: column;
+}
+body.chat-visible #side-chat-panel {
+    transform: translateX(0);
+}
+#side-chat-header { padding: 0.75rem 1rem; border-bottom: 1px solid #4a5568; display: flex; justify-content: space-between; align-items: center; }
+#side-chat-header h3 { font-family: 'Noto Serif SC', serif; font-size: 1.25em; color: #facc15; margin: 0; }
+#close-side-chat-button { background: none; border: none; color: #a0aec0; font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0.25rem; }
+#close-side-chat-button:hover { color: #e2e8f0; }
+#side-chat-log-container { flex-grow: 1; overflow-y: auto; padding: 0.75rem; background-color: rgba(26, 32, 44, 0.85); } /* Slightly different bg for log */
+#side-chat-input-container { padding: 0.75rem; border-top: 1px solid #4a5568; display: flex; gap: 0.5rem; align-items: center; background-color: rgba(30, 41, 59, 0.95); }
+#side-chat-input { flex-grow: 1; } /* Uses .auth-input styling via JS potentially, or new specific styles */
+#side-chat-send-button { /* Uses .action-button styling via JS */ white-space: nowrap; }
+
+/* Gender Selection Styling */
+#gender-selection-container { /* Uses auth-form-panel rpg-ui-panel */ }
+.gender-options-container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.gender-option {
+    cursor: pointer;
+    padding: 1rem;
+    border: 3px solid transparent;
+    border-radius: 8px;
+    transition: border-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+    text-align: center;
+}
+.gender-option:hover {
+    border-color: #facc15; /* yellow-400 */
+   transform: scale(1.05);
+}
+.gender-option img {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+}
+.gender-option p { font-family: 'Noto Serif SC', serif; font-size: 1.1em; color: #e2e8f0; }
